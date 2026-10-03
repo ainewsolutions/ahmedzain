@@ -161,3 +161,4 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(180deg,#e
 .copy-toast.show { opacity: 1; transform: translate(-50%, 0); }
 .copy-toast.ok { background: #16a34a; } .copy-toast.no { background: #dc2626; }
 .lesson-wrap > a { padding-bottom: 64px !important; min-height: 160px; }
+.icon-text { font-size: 46px; font-weight: 800; opacity: .85; letter-spacing: 6px; line-height: 1; direction: ltr; }

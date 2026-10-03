@@ -87,12 +87,12 @@
                         <h4 class="font-extrabold text-2xl mb-1">${L.title}</h4>
                         <p class="text-sm text-white/90"><i class="fa-solid fa-gamepad"></i> ${L.games.length} ألعاب - ${L.games.length * 15} سؤالًا</p>
                     </div>
-                    <i class="fa-solid ${L.icon} text-5xl opacity-80"></i>
+                    ${L.iconText ? `<span class="icon-text">${L.iconText}</span>` : `<i class="fa-solid ${L.icon} text-5xl opacity-80"></i>`}
                 </a>
                 <button class="copy-btn" onclick="copyLesson(event, '${id}', this)" title="${lessonUrl(id)}"><i class="fa-solid fa-copy"></i> نسخ الرابط</button>
             </div>`);
         });
-        document.getElementById('summary').innerText = 'درسان × 6 ألعاب تفاعلية × 15 سؤالًا - بدون وقت محدد';
+        document.getElementById('summary').innerText = ids.length + ' دروس × 6 ألعاب تفاعلية × 15 سؤالًا - بدون وقت محدد';
     </script>
 </body>
 </html>
