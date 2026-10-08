@@ -189,6 +189,26 @@
                 <p class="text-center text-sm font-bold text-gray-500 mt-3">المس الزاوية التى بها الإجابة الصحيحة لتسدد الكرة</p>
             </div>
         </div>
+    
+        <!-- 9. من سيربح المليون -->
+        <div id="screen-millionaire" class="hidden game-screen">
+            <div class="mil-wrap">
+                <div class="mil-ladder" id="mil-ladder"></div>
+                <h2 class="mil-title"><i class="fa-solid fa-trophy"></i> من سيربح المليون؟ <i class="fa-solid fa-trophy"></i></h2>
+                <div class="mil-bar">
+                    <div class="mil-pill" id="mil-qnum"></div>
+                    <div class="mil-prize"><i class="fa-solid fa-sack-dollar"></i> <span id="mil-prize"></span></div>
+                </div>
+                <div class="mil-lifelines">
+                    <button id="ll-5050" class="mil-ll" onclick="useLifeline('5050')" title="حذف إجابتين"><i class="fa-solid fa-scissors"></i><small>حذف إجابتين</small></button>
+                    <button id="ll-phone" class="mil-ll" onclick="useLifeline('phone')" title="اتصال بصديق"><i class="fa-solid fa-phone"></i><small>اتصال بصديق</small></button>
+                    <button id="ll-aud" class="mil-ll" onclick="useLifeline('aud')" title="رأى الجمهور"><i class="fa-solid fa-users"></i><small>رأى الجمهور</small></button>
+                </div>
+                <div class="mil-help hidden" id="mil-help"></div>
+                <div class="mil-question" id="mil-question"></div>
+                <div class="mil-options" id="mil-options"></div>
+            </div>
+        </div>
     </div>
 
     <!-- نافذة التغذية الراجعة -->

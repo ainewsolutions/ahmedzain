@@ -72,7 +72,7 @@ function startGame(type) {
     document.getElementById('endgame-modal').classList.add('hidden');
     gameState.activeGame = type; gameState.score = 0; gameState.questionIndex = 0; gameState.subLevel = 0;
     const src = D[type] || [];
-    gameState.tempData = shuffleArray(src);
+    gameState.tempData = type === 'millionaire' ? src.slice() : shuffleArray(src); // المليون: الأسئلة متدرجة الصعوبة
     gameState.total = src.length;
     document.querySelectorAll('.total-count').forEach(e => e.innerText = gameState.total);
     showScreen(type);
@@ -84,6 +84,7 @@ function startGame(type) {
     else if (type === 'shoot') loadShoot();
     else if (type === 'tug') { gameState.tugPos = 0; moveRope(); loadTug(); }
     else if (type === 'goal') loadGoal();
+    else if (type === 'millionaire') { gameState.ll = { '5050': true, phone: true, aud: true }; loadMil(); }
 }
 
 function updateScoreDisplay() { document.getElementById('current-score').innerText = gameState.score; }
@@ -96,6 +97,8 @@ function endGame() {
     if (gameState.activeGame === 'tug') {
         const p = gameState.tugPos;
         document.getElementById('endgame-msg').innerText = p > 0 ? 'فاز فريقك فى شد الحبل! 🏆' : p < 0 ? 'فاز المنافس هذه المرة .. أعد المحاولة 💪' : 'تعادل! الحبل فى المنتصف 🤝';
+    } else if (gameState.activeGame === 'millionaire') {
+        document.getElementById('endgame-msg').innerText = gameState.score === gameState.total ? '🎉 مبروك! أنت مليونير الرياضيات 🏆' : 'ربحت ' + milFmt(milPrize()) + ' نقطة 💰';
     } else if (gameState.activeGame === 'goal') {
         document.getElementById('endgame-msg').innerText = 'سجّلت ' + toAr(gameState.score) + ' أهداف ⚽ ' + document.getElementById('endgame-msg').innerText;
     }
@@ -107,7 +110,7 @@ function showFeedback(isCorrect, messageHtml, callback) {
     const modal = document.getElementById('feedback-modal'), content = document.getElementById('feedback-content');
     const icon = document.getElementById('feedback-icon'), title = document.getElementById('feedback-title');
     gameState.onFeedbackClose = callback;
-    if (!['tug', 'goal'].includes(gameState.activeGame)) isCorrect ? SFX.correct() : SFX.wrong();
+    if (!['tug', 'goal', 'millionaire'].includes(gameState.activeGame)) isCorrect ? SFX.correct() : SFX.wrong();
     if (isCorrect) {
         icon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 popup-anim"></i>';
         title.innerText = "إجابة صحيحة!"; title.className = "text-2xl font-bold mb-2 text-green-600";
@@ -379,3 +382,83 @@ function refreshSoundBtn() {
 function toggleSound() { SFX.setMuted(!SFX.isMuted()); refreshSoundBtn(); if (!SFX.isMuted()) SFX.small(true); }
 refreshSoundBtn();
 document.addEventListener('pointerdown', () => SFX.unlock(), { once: true });
+
+// ---- 9. من سيربح المليون ----
+const MIL_LADDER = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
+const MIL_LETTERS = ['أ', 'ب', 'ج', 'د'];
+function milFmt(n) { return toAr(n.toLocaleString('en-US')); }
+function milPrize() { return gameState.score ? MIL_LADDER[Math.min(gameState.score, MIL_LADDER.length) - 1] : 0; }
+function milRenderTop() {
+    const lad = document.getElementById('mil-ladder');
+    lad.innerHTML = MIL_LADDER.slice(0, gameState.total).map((p, i) => {
+        const cls = i < gameState.score ? 'won' : (i === gameState.score ? 'next' : '');
+        return `<div class="mil-step ${cls} ${i === 4 || i === 9 || i === 14 ? 'safe' : ''}"><b>${toAr(i + 1)}</b><span>${milFmt(p)}</span></div>`;
+    }).join('');
+    const cur = lad.querySelector('.next') || lad.lastElementChild;
+    if (cur) lad.scrollLeft = cur.offsetLeft - lad.clientWidth / 2 + cur.clientWidth / 2;
+    document.getElementById('mil-qnum').innerText = 'السؤال ' + toAr(Math.min(gameState.questionIndex + 1, gameState.total)) + ' من ' + toAr(gameState.total);
+    document.getElementById('mil-prize').innerText = milFmt(milPrize()) + ' نقطة';
+    ['5050', 'phone', 'aud'].forEach(k => document.getElementById('ll-' + (k === '5050' ? '5050' : k)).classList.toggle('used', !gameState.ll[k]));
+}
+function loadMil() {
+    if (gameState.questionIndex >= gameState.total) return endGame();
+    gameState.locked = false;
+    const q = gameState.tempData[gameState.questionIndex];
+    milRenderTop();
+    const help = document.getElementById('mil-help'); help.classList.add('hidden'); help.innerHTML = '';
+    const qb = document.getElementById('mil-question'); qb.innerHTML = fmt(q.q);
+    qb.classList.remove('popup-anim'); void qb.offsetWidth; qb.classList.add('popup-anim');
+    const box = document.getElementById('mil-options'); box.innerHTML = '';
+    gameState.milOpts = shuffleArray(q.options);
+    gameState.milOpts.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.className = 'mil-opt'; b.dataset.opt = opt;
+        b.innerHTML = `<span class="mil-letter">${MIL_LETTERS[i]}</span><span class="mil-txt">${fmt(opt)}</span>`;
+        b.onclick = () => pickMil(opt, q, b);
+        box.appendChild(b);
+    });
+}
+function pickMil(sel, q, btn) {
+    if (gameState.locked) return; gameState.locked = true;
+    btn.classList.add('final');
+    const ok = sel === q.ans;
+    setTimeout(() => {
+        document.querySelectorAll('.mil-opt').forEach(b => { if (b.dataset.opt === q.ans) b.classList.add('right'); });
+        if (!ok) btn.classList.add('wrong');
+        btn.classList.remove('final');
+        ok ? SFX.correct(true) : SFX.wrong();
+        if (ok) gameState.score++;
+        updateScoreDisplay(); milRenderTop();
+        setTimeout(() => showFeedback(ok, (ok ? `إجابة نهائية صحيحة! رصيدك الآن ${milFmt(milPrize())} نقطة 💰` : `الإجابة الصحيحة: ${fmt(q.ans)}`) + explain(q),
+            () => { gameState.questionIndex++; loadMil(); }), 1100);
+    }, 1300);
+}
+function useLifeline(kind) {
+    if (gameState.locked || !gameState.ll || !gameState.ll[kind]) return;
+    gameState.ll[kind] = false; milRenderTop(); SFX.small(true);
+    const q = gameState.tempData[gameState.questionIndex];
+    const btns = [...document.querySelectorAll('.mil-opt')];
+    const visible = btns.filter(b => !b.classList.contains('gone'));
+    const help = document.getElementById('mil-help');
+    if (kind === '5050') {
+        shuffleArray(visible.filter(b => b.dataset.opt !== q.ans)).slice(0, 2).forEach(b => { b.classList.add('gone'); b.disabled = true; });
+        return;
+    }
+    const letterOf = b => b.querySelector('.mil-letter').innerText;
+    const right = btns.find(b => b.dataset.opt === q.ans);
+    if (kind === 'phone') {
+        const sure = Math.random() < 0.85;
+        const pick = sure ? right : shuffleArray(visible.filter(b => b !== right))[0] || right;
+        help.innerHTML = `<i class="fa-solid fa-phone"></i> صديقك يقول: «${sure ? 'أنا متأكد تقريبًا' : 'مش متأكد .. لكن أعتقد'} إن الإجابة هى <b>(${letterOf(pick)})</b>»`;
+    } else {
+        let left = 100; const shares = {};
+        const rp = 45 + Math.floor(Math.random() * 30); shares[right.dataset.opt] = rp; left -= rp;
+        const others = visible.filter(b => b !== right);
+        others.forEach((b, i) => { const v = i === others.length - 1 ? left : Math.floor(Math.random() * (left + 1)); shares[b.dataset.opt] = v; left -= v; });
+        help.innerHTML = '<div class="mil-aud">' + btns.map(b => {
+            const v = shares[b.dataset.opt] || 0;
+            return `<div class="mil-aud-col"><span>${toAr(v)}٪</span><div class="mil-aud-bar"><i style="height:${v}%"></i></div><b>${letterOf(b)}</b></div>`;
+        }).join('') + '</div>';
+    }
+    help.classList.remove('hidden');
+}
