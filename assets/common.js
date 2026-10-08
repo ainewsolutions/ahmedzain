@@ -14,7 +14,7 @@ const GAME_DEFS = {
     goal:    { title: "تسجيل الأهداف", sub: "اختر الزاوية الصحيحة وسجّل", icon: "fa-futbol", color: "from-emerald-500 to-green-700" },
     tf:      { title: "صح أم خطأ", sub: "حدد صحة العبارات", icon: "fa-check-double", color: "from-orange-500 to-orange-600" },
     match:   { title: "لعبة التوصيل", sub: "اربط بين العبارة وقيمتها", icon: "fa-link", color: "from-green-500 to-green-600" },
-    millionaire: { title: "من سيربح المليون؟", sub: "اصعد سلم الجوائز حتى المليون", icon: "fa-trophy", color: "from-purple-600 to-indigo-700" },
+    millionaire: { title: "من سيربح المليون؟", sub: "إجابة خاطئة واحدة تُنهى المسابقة!", icon: "fa-trophy", color: "from-purple-600 to-indigo-700" },
     fill:    { title: "أكمل الفراغ", sub: "اختر ما يكمل العبارة", icon: "fa-puzzle-piece", color: "from-purple-500 to-purple-600" }
 };
 

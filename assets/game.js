@@ -84,7 +84,7 @@ function startGame(type) {
     else if (type === 'shoot') loadShoot();
     else if (type === 'tug') { gameState.tugPos = 0; moveRope(); loadTug(); }
     else if (type === 'goal') loadGoal();
-    else if (type === 'millionaire') { gameState.ll = { '5050': true, phone: true, aud: true }; loadMil(); }
+    else if (type === 'millionaire') { gameState.ll = { '5050': true, phone: true, aud: true }; gameState.milLost = false; loadMil(); }
 }
 
 function updateScoreDisplay() { document.getElementById('current-score').innerText = gameState.score; }
@@ -98,11 +98,14 @@ function endGame() {
         const p = gameState.tugPos;
         document.getElementById('endgame-msg').innerText = p > 0 ? 'فاز فريقك فى شد الحبل! 🏆' : p < 0 ? 'فاز المنافس هذه المرة .. أعد المحاولة 💪' : 'تعادل! الحبل فى المنتصف 🤝';
     } else if (gameState.activeGame === 'millionaire') {
-        document.getElementById('endgame-msg').innerText = gameState.score === gameState.total ? '🎉 مبروك! أنت مليونير الرياضيات 🏆' : 'ربحت ' + milFmt(milPrize()) + ' نقطة 💰';
+        document.getElementById('endgame-msg').innerText = gameState.score === gameState.total ? '🎉 مبروك! أنت مليونير الرياضيات 🏆'
+            : (gameState.score ? 'انتهت المسابقة عند السؤال ' + toAr(gameState.score + 1) + ' .. رصيدك النهائى ' + milFmt(milPrize()) + ' نقطة 💰' : 'انتهت المسابقة من السؤال الأول .. حاول مرة أخرى 💪');
     } else if (gameState.activeGame === 'goal') {
         document.getElementById('endgame-msg').innerText = 'سجّلت ' + toAr(gameState.score) + ' أهداف ⚽ ' + document.getElementById('endgame-msg').innerText;
     }
-    (gameState.score / gameState.total >= 0.5) ? SFX.fanfare() : SFX.wrong();
+    document.querySelector('#endgame-modal h2').innerText = (gameState.activeGame === 'millionaire' && gameState.milLost) ? 'انتهت المسابقة!' : 'اكتملت اللعبة!';
+    if (gameState.activeGame === 'millionaire' && gameState.milLost) { if (gameState.score >= 5) SFX.fanfare(); }
+    else (gameState.score / gameState.total >= 0.5) ? SFX.fanfare() : SFX.wrong();
     document.getElementById('endgame-modal').classList.remove('hidden');
 }
 
@@ -392,7 +395,7 @@ function milRenderTop() {
     const lad = document.getElementById('mil-ladder');
     lad.innerHTML = MIL_LADDER.slice(0, gameState.total).map((p, i) => {
         const cls = i < gameState.score ? 'won' : (i === gameState.score ? 'next' : '');
-        return `<div class="mil-step ${cls} ${i === 4 || i === 9 || i === 14 ? 'safe' : ''}"><b>${toAr(i + 1)}</b><span>${milFmt(p)}</span></div>`;
+        return `<div class="mil-step ${cls} "><b>${toAr(i + 1)}</b><span>${milFmt(p)}</span></div>`;
     }).join('');
     const cur = lad.querySelector('.next') || lad.lastElementChild;
     if (cur) lad.scrollLeft = cur.offsetLeft - lad.clientWidth / 2 + cur.clientWidth / 2;
@@ -429,8 +432,10 @@ function pickMil(sel, q, btn) {
         ok ? SFX.correct(true) : SFX.wrong();
         if (ok) gameState.score++;
         updateScoreDisplay(); milRenderTop();
-        setTimeout(() => showFeedback(ok, (ok ? `إجابة نهائية صحيحة! رصيدك الآن ${milFmt(milPrize())} نقطة 💰` : `الإجابة الصحيحة: ${fmt(q.ans)}`) + explain(q),
-            () => { gameState.questionIndex++; loadMil(); }), 1100);
+        if (!ok) gameState.milLost = true;
+        setTimeout(() => showFeedback(ok, (ok ? `إجابة نهائية صحيحة! رصيدك الآن ${milFmt(milPrize())} نقطة 💰`
+                : `الإجابة الصحيحة: ${fmt(q.ans)}` + explain(q) + `<br><b class="text-red-600">انتهت المسابقة .. رصيدك النهائى ${milFmt(milPrize())} نقطة</b>`) + (ok ? explain(q) : ''),
+            () => { if (!ok) return endGame(); gameState.questionIndex++; loadMil(); }), 1100);
     }, 1300);
 }
 function useLifeline(kind) {
